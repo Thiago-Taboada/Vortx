@@ -300,6 +300,21 @@ export function CatalogProvider({ children }) {
     }
   }, [profile?.lang])
 
+  // Persist the optional physical profile (height, birth date, sex) and the
+  // body-composition feature toggle. Mirrors setTheme/setLang: a merged write
+  // on the user doc. The caller passes only the fields it wants to change.
+  const savePhysicalProfile = useCallback(
+    async (fields) => {
+      if (!user) throw new Error('No autenticado')
+      await setDoc(
+        doc(db, 'users', user.uid),
+        { ...fields, updatedAt: serverTimestamp() },
+        { merge: true },
+      )
+    },
+    [user],
+  )
+
   // Buy a routine slot: spend points and raise the slot limit by 1 (atomic-ish
   // merge write). The caller checks affordability.
   const buyRoutineSlot = useCallback(
@@ -434,6 +449,12 @@ export function CatalogProvider({ children }) {
     // language preference
     lang: profile?.lang ?? null,
     setLang,
+    // optional physical profile + body-composition toggle
+    heightCm: profile?.heightCm ?? '',
+    birthDate: profile?.birthDate ?? '',
+    sex: profile?.sex ?? '',
+    trackBodyComposition: profile?.trackBodyComposition ?? false,
+    savePhysicalProfile,
     // admin / base catalog
     catalogSeeded,
     seedCatalog,

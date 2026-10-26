@@ -137,6 +137,7 @@ export default function ExerciseEditor() {
           <label className="label mb-1.5">{t('exerciseEditor.name')}</label>
           <input
             value={form.name[draftLang]}
+            maxLength={60}
             onChange={(e) => setField('name', e.target.value)}
             disabled={!canEdit}
             placeholder={t('exerciseEditor.namePlaceholder')}
@@ -202,6 +203,7 @@ export default function ExerciseEditor() {
           <label className="label mb-1.5">{t('exerciseEditor.equipment')}</label>
           <input
             value={form.equipment[draftLang]}
+            maxLength={60}
             onChange={(e) => setField('equipment', e.target.value)}
             disabled={!canEdit}
             placeholder={t('exerciseEditor.equipmentPlaceholder')}
@@ -213,6 +215,7 @@ export default function ExerciseEditor() {
           <label className="label mb-1.5">{t('exerciseEditor.description')}</label>
           <textarea
             value={form.description[draftLang]}
+            maxLength={1000}
             onChange={(e) => setField('description', e.target.value)}
             disabled={!canEdit}
             rows={3}
@@ -225,6 +228,7 @@ export default function ExerciseEditor() {
           <label className="label mb-1.5">{t('exerciseEditor.cues')}</label>
           <textarea
             value={form.cues[draftLang]}
+            maxLength={1000}
             onChange={(e) => setField('cues', e.target.value)}
             disabled={!canEdit}
             rows={3}

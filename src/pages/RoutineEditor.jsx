@@ -5,6 +5,7 @@ import { useCatalog } from '../hooks/useCatalog'
 import { SESSION_TYPE_META, WEEKDAYS } from '../data/seedData'
 import { formatRest } from '../lib/sessions'
 import { localized, toLangMap, fromLangMap, mergeLang } from '../lib/i18nContent'
+import { sanitizeInteger } from '../lib/validation'
 import LangTabs from '../components/LangTabs.jsx'
 import Spinner from '../components/Spinner.jsx'
 
@@ -210,11 +211,11 @@ export default function RoutineEditor({ admin = false }) {
       <div className="card space-y-4 p-5">
         <div>
           <label className="label mb-1.5">{t('routineEditor.name')}</label>
-          <input value={name[draftLang]} onChange={(e) => setName({ ...name, [draftLang]: e.target.value })} placeholder={t('routineEditor.namePlaceholder')} className="input" />
+          <input value={name[draftLang]} maxLength={60} onChange={(e) => setName({ ...name, [draftLang]: e.target.value })} placeholder={t('routineEditor.namePlaceholder')} className="input" />
         </div>
         <div>
           <label className="label mb-1.5">{t('routineEditor.description')}</label>
-          <textarea value={description[draftLang]} onChange={(e) => setDescription({ ...description, [draftLang]: e.target.value })} rows={2} placeholder={t('routineEditor.descriptionPlaceholder')} className="input resize-none" />
+          <textarea value={description[draftLang]} maxLength={500} onChange={(e) => setDescription({ ...description, [draftLang]: e.target.value })} rows={2} placeholder={t('routineEditor.descriptionPlaceholder')} className="input resize-none" />
         </div>
       </div>
 
@@ -266,6 +267,7 @@ export default function RoutineEditor({ admin = false }) {
                         <label className="label mb-1.5">{t('routineEditor.sessionName')}</label>
                         <input
                           value={d.label[draftLang]}
+                          maxLength={60}
                           onChange={(e) => updateDayLabel(d.weekday, e.target.value)}
                           placeholder={t('sessionTypes.' + d.sessionType)}
                           className="input"
@@ -284,13 +286,13 @@ export default function RoutineEditor({ admin = false }) {
                               </div>
                               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                                 <Field label={t('routineEditor.sets')}>
-                                  <input type="number" inputMode="numeric" value={b.sets} onChange={(e) => updateBlock(d.weekday, i, { sets: e.target.value })} className="input px-2 py-1.5 text-center" />
+                                  <input type="text" inputMode="numeric" value={b.sets} onChange={(e) => updateBlock(d.weekday, i, { sets: sanitizeInteger(e.target.value, { maxDigits: 2, max: 20 }) })} className="input px-2 py-1.5 text-center" />
                                 </Field>
                                 <Field label={t('routineEditor.reps')}>
-                                  <input value={b.repsText} onChange={(e) => updateBlock(d.weekday, i, { repsText: e.target.value })} placeholder="8-12" className="input px-2 py-1.5 text-center" />
+                                  <input value={b.repsText} maxLength={15} onChange={(e) => updateBlock(d.weekday, i, { repsText: e.target.value })} placeholder="8-12" className="input px-2 py-1.5 text-center" />
                                 </Field>
                                 <Field label={t('routineEditor.restSeconds')}>
-                                  <input type="number" inputMode="numeric" value={b.restSeconds ?? ''} onChange={(e) => updateBlock(d.weekday, i, { restSeconds: e.target.value })} placeholder="60" className="input px-2 py-1.5 text-center" />
+                                  <input type="text" inputMode="numeric" value={b.restSeconds ?? ''} onChange={(e) => updateBlock(d.weekday, i, { restSeconds: sanitizeInteger(e.target.value, { maxDigits: 4, max: 9999 }) })} placeholder="60" className="input px-2 py-1.5 text-center" />
                                 </Field>
                                 <Field label={t('routineEditor.perSide')}>
                                   <button

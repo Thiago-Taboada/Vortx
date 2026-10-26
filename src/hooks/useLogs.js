@@ -107,15 +107,28 @@ export function LogsProvider({ children }) {
     [user],
   )
 
-  // Save the body weight for a given week (one entry per weekId).
+  // Save the body weight for a given week (one entry per weekId). The four
+  // body-composition fields (smart-scale users) are optional: only the ones
+  // actually provided as a finite positive number are written, so Analysis'
+  // "has data?" checks stay accurate and blanks never persist as null/0.
   const saveWeight = useCallback(
-    async ({ weekId, date, weightKg }) => {
+    async ({ weekId, date, weightKg, bodyFatPct, muscleMassKg, visceralFat, bmrKcal }) => {
       if (!user) throw new Error('No autenticado')
-      await setDoc(
-        doc(db, 'users', user.uid, 'weights', weekId),
-        { weekId, date, weightKg: Number(weightKg), updatedAt: Date.now() },
-        { merge: true },
-      )
+      const payload = { weekId, date, weightKg: Number(weightKg), updatedAt: Date.now() }
+      const optional = { bodyFatPct, muscleMassKg, visceralFat, bmrKcal }
+      for (const [key, raw] of Object.entries(optional)) {
+        const n = Number(raw)
+        if (Number.isFinite(n) && n > 0) payload[key] = n
+      }
+      await setDoc(doc(db, 'users', user.uid, 'weights', weekId), payload, { merge: true })
+    },
+    [user],
+  )
+
+  const deleteWeight = useCallback(
+    async (weekId) => {
+      if (!user) throw new Error('No autenticado')
+      await deleteDoc(doc(db, 'users', user.uid, 'weights', weekId))
     },
     [user],
   )
@@ -150,7 +163,7 @@ export function LogsProvider({ children }) {
     [user],
   )
 
-  const value = { logs, weights, loading, saveLog, deleteLog, saveWeight, importLogsAndWeights }
+  const value = { logs, weights, loading, saveLog, deleteLog, saveWeight, deleteWeight, importLogsAndWeights }
   return createElement(LogsContext.Provider, { value }, children)
 }
 

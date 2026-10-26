@@ -80,6 +80,7 @@ export default function Login() {
               <label className="label mb-1.5">{t('login.name')}</label>
               <input
                 value={name}
+                maxLength={40}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('login.namePlaceholder')}
                 className="input"

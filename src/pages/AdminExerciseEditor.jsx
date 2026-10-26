@@ -123,7 +123,7 @@ export default function AdminExerciseEditor() {
       <div className="card space-y-4 p-5">
         <div>
           <label className="label mb-1.5">{t('admin.name')}</label>
-          <input value={form.name[draftLang]} onChange={(e) => setField('name', e.target.value)} className="input" />
+          <input value={form.name[draftLang]} maxLength={60} onChange={(e) => setField('name', e.target.value)} className="input" />
         </div>
 
         <div>
@@ -166,17 +166,17 @@ export default function AdminExerciseEditor() {
 
         <div>
           <label className="label mb-1.5">{t('admin.equipment')}</label>
-          <input value={form.equipment[draftLang]} onChange={(e) => setField('equipment', e.target.value)} className="input" />
+          <input value={form.equipment[draftLang]} maxLength={60} onChange={(e) => setField('equipment', e.target.value)} className="input" />
         </div>
 
         <div>
           <label className="label mb-1.5">{t('admin.description')}</label>
-          <textarea value={form.description[draftLang]} onChange={(e) => setField('description', e.target.value)} rows={3} className="input resize-none" />
+          <textarea value={form.description[draftLang]} maxLength={1000} onChange={(e) => setField('description', e.target.value)} rows={3} className="input resize-none" />
         </div>
 
         <div>
           <label className="label mb-1.5">{t('admin.cues')}</label>
-          <textarea value={form.cues[draftLang]} onChange={(e) => setField('cues', e.target.value)} rows={3} className="input resize-none" />
+          <textarea value={form.cues[draftLang]} maxLength={1000} onChange={(e) => setField('cues', e.target.value)} rows={3} className="input resize-none" />
         </div>
       </div>
 

@@ -44,7 +44,7 @@ const TOOLTIP = {
 
 export default function Analysis() {
   const { t } = useTranslation()
-  const { exercises, activeRoutines, activeTheme, loading } = useCatalog()
+  const { exercises, activeRoutines, activeTheme, heightCm, loading } = useCatalog()
   const { logs, weights, loading: logsLoading } = useLogs()
   const accent = themeAccent(activeTheme)
 
@@ -86,7 +86,11 @@ export default function Analysis() {
       <Header />
 
       {/* Wide chart: needs horizontal room */}
-      <BodyWeight weights={weights} logs={trainedLogs} accent={accent} />
+      <BodyWeight weights={weights} logs={trainedLogs} accent={accent} heightCm={heightCm} />
+
+      {/* Optional body-composition charts (smart-scale users). Each renders
+          only when that metric has at least one logged value. */}
+      <BodyComposition weights={weights} accent={accent} />
 
       {/* Compact charts: two columns on large screens */}
       <div className="grid gap-5 lg:grid-cols-2">
@@ -135,8 +139,16 @@ function Section({ title, hint, children }) {
   )
 }
 
+// BMI category from value, as an i18n key.
+function bmiCategoryKey(bmi) {
+  if (bmi < 18.5) return 'analysis.bmiUnderweight'
+  if (bmi < 25) return 'analysis.bmiNormal'
+  if (bmi < 30) return 'analysis.bmiOverweight'
+  return 'analysis.bmiObese'
+}
+
 // 0. Body weight over time + weekly sessions (to relate weight to training load)
-function BodyWeight({ weights, logs, accent }) {
+function BodyWeight({ weights, logs, accent, heightCm }) {
   const { t } = useTranslation()
   const sorted = useMemo(
     () => [...weights].sort((a, b) => (a.weekId > b.weekId ? 1 : -1)),
@@ -164,6 +176,13 @@ function BodyWeight({ weights, logs, accent }) {
   const first = sorted[0]?.weightKg ?? null
   const delta = latest != null && first != null ? +(latest - first).toFixed(1) : null
 
+  // BMI from the latest weight + profile height. Only shown when both exist.
+  const height = Number(heightCm)
+  const bmi =
+    latest != null && Number.isFinite(height) && height > 0
+      ? +(latest / (height / 100) ** 2).toFixed(1)
+      : null
+
   if (weights.length === 0) {
     return (
       <Section title={t('analysis.bodyWeight')} hint={t('analysis.bodyWeightHintStart')}>
@@ -184,6 +203,9 @@ function BodyWeight({ weights, logs, accent }) {
             value={`${delta > 0 ? '+' : ''}${delta} kg`}
             tone={delta > 0 ? 'pink' : 'brand'}
           />
+        )}
+        {bmi != null && (
+          <Metric label={t('analysis.bmi')} value={`${bmi} · ${t(bmiCategoryKey(bmi))}`} tone="brand" />
         )}
       </div>
       <ResponsiveContainer width="100%" height={220}>
@@ -208,6 +230,55 @@ function Metric({ label, value, tone }) {
       <p className="label">{label}</p>
       <p className={`font-display text-2xl font-extrabold ${color}`}>{value}</p>
     </div>
+  )
+}
+
+// Optional body-composition metrics from a smart scale. One evolution line per
+// metric, rendered only when at least one weight entry has that field.
+const COMPOSITION_META = [
+  { field: 'bodyFatPct', titleKey: 'analysis.bodyFat', hintKey: 'analysis.bodyFatHint' },
+  { field: 'muscleMassKg', titleKey: 'analysis.muscleMass', hintKey: 'analysis.muscleMassHint' },
+  { field: 'visceralFat', titleKey: 'analysis.visceralFat', hintKey: 'analysis.visceralFatHint' },
+  { field: 'bmrKcal', titleKey: 'analysis.bmr', hintKey: 'analysis.bmrHint' },
+]
+
+function BodyComposition({ weights, accent }) {
+  const sorted = useMemo(
+    () => [...weights].sort((a, b) => (a.weekId > b.weekId ? 1 : -1)),
+    [weights],
+  )
+  const charts = COMPOSITION_META.filter((m) =>
+    sorted.some((w) => Number.isFinite(Number(w[m.field]))),
+  )
+  if (charts.length === 0) return null
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-2">
+      {charts.map((m) => (
+        <CompositionChart key={m.field} meta={m} weights={sorted} accent={accent} />
+      ))}
+    </div>
+  )
+}
+
+function CompositionChart({ meta, weights, accent }) {
+  const { t } = useTranslation()
+  const data = weights
+    .filter((w) => Number.isFinite(Number(w[meta.field])))
+    .map((w) => ({ date: formatShort(fromISODate(w.date)), valor: Number(w[meta.field]) }))
+
+  return (
+    <Section title={t(meta.titleKey)} hint={t(meta.hintKey)}>
+      <ResponsiveContainer width="100%" height={200}>
+        <LineChart data={data} margin={{ top: 10, right: 5, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1c2743" />
+          <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} stroke="#2a3761" />
+          <YAxis tick={{ fontSize: 11, fill: '#64748b' }} stroke="#2a3761" domain={['dataMin - 1', 'dataMax + 1']} />
+          <Tooltip {...TOOLTIP} />
+          <Line type="monotone" dataKey="valor" name={t(meta.titleKey)} stroke={accent} strokeWidth={2.5} dot={{ r: 3, fill: accent }} />
+        </LineChart>
+      </ResponsiveContainer>
+    </Section>
   )
 }
 

@@ -6,6 +6,7 @@ import { useLogs } from '../hooks/useLogs'
 import { localized } from '../lib/i18nContent'
 import { sessionForDay, metaFor } from '../lib/sessions'
 import { formatLong, fromISODate, toISODate } from '../lib/dates'
+import { sanitizeDecimal, sanitizeInteger } from '../lib/validation'
 import Spinner from '../components/Spinner.jsx'
 import { StatusDot } from '../components/icons.jsx'
 
@@ -322,6 +323,7 @@ export default function SessionLog() {
             <label className="label mb-1.5">{t('sessionLog.notes')}</label>
             <textarea
               value={notes}
+              maxLength={1000}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder={t('sessionLog.notesPlaceholder')}
@@ -456,10 +458,10 @@ function SetRow({ index, set, tracking, onUpdate, onRemove }) {
       <div className="grid grid-cols-[28px_1fr_auto] items-center gap-2">
         <span className="text-sm font-semibold text-slate-400">{index + 1}</span>
         <input
-          type="number"
+          type="text"
           inputMode="numeric"
           value={set.timeSeconds}
-          onChange={(e) => onUpdate('timeSeconds', e.target.value)}
+          onChange={(e) => onUpdate('timeSeconds', sanitizeInteger(e.target.value, { maxDigits: 4, max: 9999 }))}
           onKeyDown={blurOnEnter}
           placeholder="—"
           className="input px-2 py-1.5 text-center"
@@ -474,19 +476,19 @@ function SetRow({ index, set, tracking, onUpdate, onRemove }) {
     <div className="flex items-center gap-2">
       <span className="w-5 shrink-0 text-sm font-semibold text-slate-400">{index + 1}</span>
       <input
-        type="number"
+        type="text"
         inputMode="numeric"
         value={set.reps}
-        onChange={(e) => onUpdate('reps', e.target.value)}
+        onChange={(e) => onUpdate('reps', sanitizeInteger(e.target.value, { maxDigits: 3, max: 999 }))}
         onKeyDown={blurOnEnter}
         placeholder={t('sessionLog.repsPlaceholder')}
         className="input w-0 flex-1 px-2 py-1.5 text-center"
       />
       <input
-        type="number"
+        type="text"
         inputMode="decimal"
         value={set.weightKg}
-        onChange={(e) => onUpdate('weightKg', e.target.value)}
+        onChange={(e) => onUpdate('weightKg', sanitizeDecimal(e.target.value, { maxIntDigits: 3, maxDecimals: 3, max: 500 }))}
         onKeyDown={blurOnEnter}
         placeholder="kg"
         title={t('sessionLog.weightTitle')}
